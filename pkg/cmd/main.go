@@ -3,8 +3,11 @@ package main
 import (
 	_ "embed"
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"os"
 
+	"github.com/SourceFellows/go-fidl-dbus-generator/pkg"
 	gofidl "github.com/SourceFellows/go-fidl-dbus-generator/pkg"
 	"github.com/alecthomas/repr"
 )
@@ -25,5 +28,7 @@ func main() {
 	}
 
 	repr.Println(fidl)
+
+	fmt.Println(pkg.Write(fidl, os.Stdout))
 
 }
