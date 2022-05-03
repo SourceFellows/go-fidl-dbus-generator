@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"github.com/alecthomas/participle/v2"
@@ -79,7 +79,7 @@ type (
 
 var fidlParser = participle.MustBuild(&Fidl{}, participle.Unquote("String"))
 
-func parseFidl(input []byte) (*Fidl, error) {
+func ParseFidl(input []byte) (*Fidl, error) {
 	fidl := &Fidl{}
 	err := fidlParser.ParseBytes("", input, fidl)
 	if err != nil {

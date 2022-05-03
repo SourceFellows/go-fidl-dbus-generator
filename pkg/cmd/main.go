@@ -5,6 +5,7 @@ import (
 	"flag"
 	"io/ioutil"
 
+	gofidl "github.com/SourceFellows/go-fidl-dbus-generator/pkg"
 	"github.com/alecthomas/repr"
 )
 
@@ -18,7 +19,7 @@ func main() {
 		panic(err)
 	}
 
-	fidl, err := parseFidl(file)
+	fidl, err := gofidl.ParseFidl(file)
 	if err != nil {
 		panic(err)
 	}
