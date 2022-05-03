@@ -3,12 +3,14 @@ package main
 import (
 	_ "embed"
 	"flag"
-	"github.com/alecthomas/repr"
 	"io/ioutil"
+
+	"github.com/alecthomas/repr"
 )
 
 func main() {
-	path := flag.String("path", "", "path to FIDL file to parse")
+
+	path := flag.String("in", "", "path to FIDL file to parse")
 	flag.Parse()
 
 	file, err := ioutil.ReadFile(*path)
