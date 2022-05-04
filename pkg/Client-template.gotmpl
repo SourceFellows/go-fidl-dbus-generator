@@ -1,0 +1,19 @@
+{{ $ImplementationName := nameify .InterfaceName }}
+
+func New{{.InterfaceName}}Client() *{{$ImplementationName}} {
+    return &{{$ImplementationName}}{}
+}
+
+type {{$ImplementationName}} struct {
+}
+
+{{range .Entry.TypeRef}}
+	{{if .Method}}
+func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
+    {{- $paramCount := len .Method.Params.InParams}}
+    {{- range $idx, $param := .Method.Params.InParams -}}
+        {{$param.Name}} {{goType $param.Type}} {{if $idx = $paramCount}},{{end -}}
+    {{- end}}) error {
+    }
+	{{end}}
+{{end}}
