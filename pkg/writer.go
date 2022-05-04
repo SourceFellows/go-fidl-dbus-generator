@@ -5,17 +5,25 @@ import (
 	"text/template"
 )
 
-var typeTemplate = `type {{.InterfaceName}} strutc {
-	{{range .Entry.TypeRef}}
-		{{if .Method}}
-		func {{.Method.Name}}() {}
-		{{end}}
+var typeTemplate = `
+{{ $ImplementationName := nameify .InterfaceName }}
+
+type {{$ImplementationName}} struct {
+}
+
+{{range .Entry.TypeRef}}
+	{{if .Method}}
+func (impl *{{$ImplementationName}}) {{.Method.Name}}() error {}
 	{{end}}
-}`
+{{end}}
+`
 
 func Write(fidl *Fidl, writer io.Writer) error {
 
+	funcs := template.FuncMap{"nameify": nameify}
+
 	tmpl, err := template.New("type").
+		Funcs(funcs).
 		Parse(typeTemplate)
 
 	if err != nil {
@@ -24,4 +32,8 @@ func Write(fidl *Fidl, writer io.Writer) error {
 
 	return tmpl.Execute(writer, fidl)
 
+}
+
+func nameify(val string) string {
+	return "val"
 }
