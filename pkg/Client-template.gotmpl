@@ -33,12 +33,14 @@ func (impl *{{$ImplementationName}}) Close() error {
 {{range .Entry.TypeRef}}
 	{{if .Method}}
 func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
-    {{- $paramCount := len .Method.Params.InParams}}
+    {{- $paramCountIn := len .Method.Params.InParams}}
+    {{- $paramCountOut := len .Method.Params.OutParams}}
+
     {{- range $idx, $param := .Method.Params.InParams -}}
-        {{$param.Name}} {{goType $param.Type}} {{if $idx = $paramCount}},{{end -}}
+        {{$param.Name}} {{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
     {{- end}} {{") (" -}}
     {{- range $idx, $param := .Method.Params.OutParams -}}
-        {{goType $param.Type}} {{if $idx = $paramCount}},{{end -}}
+        {{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
     {{end -}} error) {
 
         {{range $idx, $param := .Method.Params.OutParams -}}
@@ -52,7 +54,7 @@ func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
             {{- end}}).
     		Store(
     		{{- range $idx, $param := .Method.Params.OutParams -}}
-              {{goType $param.Name}}  {{if $idx = $paramCount}},{{end -}}
+              &{{goType $param.Name}}  {{if $idx = $paramCountOut}},{{end -}}
             {{end -}}
     		)
 
@@ -60,6 +62,10 @@ func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
     		return "", err
     	}
 
+        return {{ range $idx, $param := .Method.Params.OutParams -}}
+             {{goType $param.Name}}  {{if $idx = $paramCountOut}},{{end -}}
+       {{end -}}
+       nil
     }
 	{{end}}
 {{end}}

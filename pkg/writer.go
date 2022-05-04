@@ -37,6 +37,8 @@ func Write(fidl *Fidl, writer io.Writer) error {
 		return err
 	}
 
+	//fmt.Println(string(bites.Bytes()))
+
 	src, err := format.Source(bites.Bytes())
 	if err != nil {
 		return err
