@@ -31,13 +31,14 @@ func (impl *{{$ImplementationName}}) Close() error {
 }
 
 {{range .Entry.TypeRef}}
+
 	{{if .Method}}
-func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
+    func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
     {{- $paramCountIn := len .Method.Params.InParams}}
     {{- $paramCountOut := len .Method.Params.OutParams}}
 
     {{- range $idx, $param := .Method.Params.InParams -}}
-        {{$param.Name}} {{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
+        {{nameify $param.Name}} {{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
     {{- end}} {{") (" -}}
     {{- range $idx, $param := .Method.Params.OutParams -}}
         {{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
@@ -50,7 +51,7 @@ func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
     	err := conn.Object(impl.destination, impl.path).
     		Call("{{$fqInterfaceName}}.{{.Method.Name}}{{"\"" -}}
     		 {{- range $idx, $param := .Method.Params.InParams -}}
-                , {{$param.Name -}}
+                , {{nameify $param.Name -}}
             {{- end}}).
     		Store(
     		{{- range $idx, $param := .Method.Params.OutParams -}}
@@ -68,4 +69,26 @@ func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
        nil
     }
 	{{end}}
+
+	{{if .Broadcast}}
+	func (impl *{{$ImplementationName}}) {{exportNameOf .Broadcast.Name}} {{"(ctx context.Context " -}}){
+
+        //TODO: AddMatchSignal
+
+	    signalsChannel := make(chan *dbus.Signal, 10)
+	    defer close(signalsChannel)
+
+	    impl.dbusConnection.Signal(signalsChannel)
+	    for {
+            select {
+            case signal := <-signalsChannel:
+                //TODO response
+            case <-ctx.Done():
+                return "", ctx.Err()
+            }
+        }
+
+	}
+	{{end}}
+
 {{end}}

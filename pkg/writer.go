@@ -8,6 +8,7 @@ import (
 	"io"
 	"strings"
 	"text/template"
+	"unicode"
 )
 
 //go:embed Client-template.gotmpl
@@ -16,9 +17,9 @@ var clientTemplate string
 func Write(fidl *Fidl, writer io.Writer) error {
 
 	funcs := template.FuncMap{
-		"nameify":      nameify,
+		"nameify":      toGoIdentifierName,
 		"exportNameOf": exportNameOf,
-		"goType":       convertToGoType,
+		"goType":       mapFidlTypeToGoType,
 		"derefStr":     deref,
 	}
 
@@ -48,9 +49,19 @@ func Write(fidl *Fidl, writer io.Writer) error {
 	return nil
 }
 
-func nameify(typeName string) string {
-	first := strings.ToLower(string(typeName[0]))
-	return fmt.Sprintf("%s%sImpl", first, typeName[1:])
+func toGoIdentifierName(typeName string) string {
+
+	internalName := []rune(typeName)
+	makeLower := true
+	for i, r := range internalName {
+		if !unicode.IsLower(r) && makeLower {
+			internalName[i] = unicode.ToLower(r)
+		} else {
+			makeLower = false
+		}
+	}
+
+	return string(internalName)
 }
 
 func exportNameOf(name string) string {
@@ -58,15 +69,16 @@ func exportNameOf(name string) string {
 	return fmt.Sprintf("%s%s", first, name[1:])
 }
 
-func convertToGoType(fidlString string) string {
+func mapFidlTypeToGoType(fidlString string) string {
 
-	if fidlString == "String" {
-		return "string"
-	}
-	if fidlString == "Boolean" {
-		return "bool"
-	}
+	mappings := map[string]string{}
+	mappings["String"] = "string"
+	mappings["UInt8"] = "unit8"
+	mappings["UInt16"] = "uint16"
 
+	if v, ok := mappings[fidlString]; ok {
+		return v
+	}
 	return fidlString
 }
 
