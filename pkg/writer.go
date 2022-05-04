@@ -19,6 +19,7 @@ func Write(fidl *Fidl, writer io.Writer) error {
 		"nameify":      nameify,
 		"exportNameOf": exportNameOf,
 		"goType":       convertToGoType,
+		"derefStr":     deref,
 	}
 
 	tmpl, err := template.New("type").
@@ -60,6 +61,13 @@ func convertToGoType(fidlString string) string {
 	if fidlString == "String" {
 		return "string"
 	}
+	if fidlString == "Boolean" {
+		return "bool"
+	}
 
 	return fidlString
+}
+
+func deref(val *string) any {
+	return *val
 }

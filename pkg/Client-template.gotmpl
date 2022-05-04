@@ -1,10 +1,33 @@
 {{ $ImplementationName := nameify .InterfaceName }}
+{{ $fqInterfaceName := print .PackageName "." (derefStr .InterfaceName) }}
 
-func New{{.InterfaceName}}Client() *{{$ImplementationName}} {
-    return &{{$ImplementationName}}{}
+import (
+	"context"
+	"github.com/godbus/dbus/v5"
+)
+
+func New{{.InterfaceName}}Client(dest, path string) (*{{$ImplementationName}}, error) {
+
+    conn, err := dbus.ConnectSessionBus()
+    if err != nil {
+        return nil, err
+    }
+
+    return &{{$ImplementationName}}{
+        dbusConnection: conn,
+        destionation: dest,
+        path: path,
+    },nil
 }
 
 type {{$ImplementationName}} struct {
+    dbusConnection *dbus.Conn
+    destionation string
+    path string
+}
+
+func (impl *{{$ImplementationName}}) Close() error {
+    return impl.dbusConnection.Close()
 }
 
 {{range .Entry.TypeRef}}
@@ -13,7 +36,30 @@ func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
     {{- $paramCount := len .Method.Params.InParams}}
     {{- range $idx, $param := .Method.Params.InParams -}}
         {{$param.Name}} {{goType $param.Type}} {{if $idx = $paramCount}},{{end -}}
-    {{- end}}) error {
+    {{- end}} {{") (" -}}
+    {{- range $idx, $param := .Method.Params.OutParams -}}
+        {{goType $param.Type}} {{if $idx = $paramCount}},{{end -}}
+    {{end -}} error) {
+
+        {{range $idx, $param := .Method.Params.OutParams -}}
+            var {{goType $param.Name}} {{goType $param.Type}}
+        {{end}}
+
+    	err := conn.Object(impl.destination, impl.path).
+    		Call("{{$fqInterfaceName}}.{{.Method.Name}}{{"\"" -}}
+    		 {{- range $idx, $param := .Method.Params.InParams -}}
+                , {{$param.Name -}}
+            {{- end}}).
+    		Store(
+    		{{- range $idx, $param := .Method.Params.OutParams -}}
+              {{goType $param.Name}}  {{if $idx = $paramCount}},{{end -}}
+            {{end -}}
+    		)
+
+    	if err != nil {
+    		return "", err
+    	}
+
     }
 	{{end}}
 {{end}}
