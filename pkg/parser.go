@@ -67,7 +67,7 @@ type (
 	Param struct {
 		Description *Description `("<" "*" "*" @@ "*" "*" ">")?`
 		Type        string       `@Ident`
-		IsArray     *string      `("[" "]")?`
+		IsArray     bool         `("["@"]")?`
 		Name        string       `@Ident`
 	}
 

@@ -24,7 +24,7 @@ func TestParseFidl_Notofication(t *testing.T) {
 	}
 
 	actionsParam := paramOfName(fidl, "actions")
-	if actionsParam.IsArray == nil {
+	if !actionsParam.IsArray {
 		t.Error("actions should be an array")
 		return
 	}
