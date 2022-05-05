@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/SourceFellows/go-fidl-dbus-generator/pkg"
@@ -14,17 +15,23 @@ import (
 
 func main() {
 
-	path := flag.String("in", "", "path to FIDL file to parse")
+	inFile := flag.String("in", "", "path to FIDL file to parse")
 	flag.Parse()
 
-	file, err := ioutil.ReadFile(*path)
+	if inFile == nil || *inFile == "" {
+		log.Println("no input file given")
+		flag.PrintDefaults()
+		return
+	}
+
+	file, err := ioutil.ReadFile(*inFile)
 	if err != nil {
-		panic(err)
+		log.Fatalf("error while reading in file: %v", err)
 	}
 
 	fidl, err := gofidl.ParseFidl(file)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	repr.Println(fidl)
