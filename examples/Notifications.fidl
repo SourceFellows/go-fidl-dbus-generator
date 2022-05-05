@@ -1,0 +1,26 @@
+package org.freedesktop
+
+interface Notifications {
+
+   version {
+      major 1
+      minor 0
+   }
+
+   method Notify {
+      in {
+         String app_name
+         UInt32 replaces_id
+         String app_icon
+         String summary
+         String body
+         String [] actions
+         Hint [] hints
+         UInt32 expire_timeout
+      }
+      out {
+         UInt8 result
+      }
+   }
+
+}
