@@ -1,16 +1,13 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"flag"
-	"fmt"
+	"github.com/SourceFellows/go-fidl-dbus-generator/pkg/lexer"
+	"github.com/alecthomas/repr"
 	"io/ioutil"
 	"log"
-	"os"
-
-	"github.com/SourceFellows/go-fidl-dbus-generator/pkg"
-	gofidl "github.com/SourceFellows/go-fidl-dbus-generator/pkg"
-	"github.com/alecthomas/repr"
 )
 
 func main() {
@@ -29,13 +26,12 @@ func main() {
 		log.Fatalf("error while reading in file: %v", err)
 	}
 
-	fidl, err := gofidl.ParseFidl(file)
+	parser := lexer.NewParser(bytes.NewReader(file))
+
+	fidl, err := parser.Parse()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	repr.Println(fidl)
-
-	fmt.Println(pkg.Write(fidl, os.Stdout))
-
 }
