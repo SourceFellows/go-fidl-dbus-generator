@@ -1,12 +1,12 @@
-{{ $ImplementationName := nameify .InterfaceName }}
-{{ $fqInterfaceName := print .PackageName "." (derefStr .InterfaceName) }}
+{{ $ImplementationName := nameify .InterfaceInfo.Name }}
+{{ $fqInterfaceName := print .PackageInfo.Name "." .InterfaceInfo.Name }}
 
 import (
 	"context"
 	"github.com/godbus/dbus/v5"
 )
 
-func New{{.InterfaceName}}Client(dest, path string) (*{{$ImplementationName}}, error) {
+func New{{exportNameOf $ImplementationName}}Client(dest, path string) (*{{$ImplementationName}}, error) {
 
     conn, err := dbus.ConnectSessionBus()
     if err != nil {
@@ -30,31 +30,30 @@ func (impl *{{$ImplementationName}}) Close() error {
     return impl.dbusConnection.Close()
 }
 
-{{range .Entry.TypeRef}}
+{{range .Methods}}
 
-	{{if .Method}}
-    func (impl *{{$ImplementationName}}) {{exportNameOf .Method.Name}} {{"(" -}}
-    {{- $paramCountIn := len .Method.Params.InParams}}
-    {{- $paramCountOut := len .Method.Params.OutParams}}
+    func (impl *{{$ImplementationName}}) {{exportNameOf .Name}} {{"(" -}}
+    {{- $paramCountIn := len .In}}
+    {{- $paramCountOut := len .Out}}
 
-    {{- range $idx, $param := .Method.Params.InParams -}}
+    {{- range $idx, $param := .In -}}
         {{nameify $param.Name}} {{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
     {{- end}} {{") (" -}}
-    {{- range $idx, $param := .Method.Params.OutParams -}}
+    {{- range $idx, $param := .Out -}}
         {{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
     {{end -}} error) {
 
-        {{range $idx, $param := .Method.Params.OutParams -}}
+        {{range $idx, $param := .Out -}}
             var {{goType $param.Name}} {{goType $param.Type}}
         {{end}}
 
     	err := conn.Object(impl.destination, impl.path).
-    		Call("{{$fqInterfaceName}}.{{.Method.Name}}{{"\"" -}}
-    		 {{- range $idx, $param := .Method.Params.InParams -}}
+    		Call("{{$fqInterfaceName}}.{{.Name}}{{"\"" -}}
+    		 {{- range $idx, $param := .In -}}
                 , {{nameify $param.Name -}}
             {{- end}}).
     		Store(
-    		{{- range $idx, $param := .Method.Params.OutParams -}}
+    		{{- range $idx, $param := .Out -}}
               &{{goType $param.Name}}  {{if $idx = $paramCountOut}},{{end -}}
             {{end -}}
     		)
@@ -63,15 +62,15 @@ func (impl *{{$ImplementationName}}) Close() error {
     		return "", err
     	}
 
-        return {{ range $idx, $param := .Method.Params.OutParams -}}
+        return {{ range $idx, $param := .Out -}}
              {{goType $param.Name}}  {{if $idx = $paramCountOut}},{{end -}}
        {{end -}}
        nil
     }
-	{{end}}
+{{end}}
 
-	{{if .Broadcast}}
-	func (impl *{{$ImplementationName}}) {{exportNameOf .Broadcast.Name}} {{"(ctx context.Context " -}}){
+{{range .Broadcasts}}
+	func (impl *{{$ImplementationName}}) {{exportNameOf .Name}} {{"(ctx context.Context " -}}){
 
         //TODO: AddMatchSignal
 
@@ -89,6 +88,4 @@ func (impl *{{$ImplementationName}}) Close() error {
         }
 
 	}
-	{{end}}
-
 {{end}}
