@@ -66,6 +66,16 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 		return QUOTE, string(ch)
 	case '\'':
 		return SINGLE_QUOTE, string(ch)
+	case '^':
+		return CIRCUMFLEX, string(ch)
+	case '[':
+		return SQUARE_BRACKET_OPEN, string(ch)
+	case ']':
+		return SQUARE_BRACKET_CLOSE, string(ch)
+	case '{':
+		return CURLY_BRACKET_OPEN, string(ch)
+	case '}':
+		return CURLY_BRACKET_CLOSE, string(ch)
 	}
 
 	return ILLEGAL, string(ch)

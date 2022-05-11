@@ -8,12 +8,12 @@ import (
 // Fidl represents a FIDL file.
 type (
 	Fidl struct {
-		Package    PackageInfo
-		Interface  InterfaceInfo
-		Attributes []Attribute
-		Methods    []Method
-		Broadcasts []Broadcast
-		Structs    []Struct
+		PackageInfo   *PackageInfo
+		InterfaceInfo *InterfaceInfo
+		Attributes    []Attribute
+		Methods       []Method
+		Broadcasts    []Broadcast
+		Structs       []Struct
 	}
 
 	PackageInfo struct {
@@ -32,6 +32,7 @@ type (
 		Description string
 		Type        string
 		Name        string
+		IsArray     bool
 	}
 
 	Method struct {
@@ -79,45 +80,27 @@ func NewParser(r io.Reader) *Parser {
 // Parse parses a FIDL file.
 func (p *Parser) Parse() (*Fidl, error) {
 	fidl := &Fidl{
-		Package:    PackageInfo{},
-		Interface:  InterfaceInfo{},
-		Attributes: nil,
-		Methods:    nil,
-		Broadcasts: nil,
-		Structs:    nil,
+		PackageInfo:   nil,
+		InterfaceInfo: nil,
+		Attributes:    nil,
+		Methods:       nil,
+		Broadcasts:    nil,
+		Structs:       nil,
 	}
 
-	// First token should be a "SELECT" keyword.
-	tok, lit := p.scanIgnoreWhitespace()
-	if tok != PACKAGE {
-		return nil, fmt.Errorf("found %q, expected package", lit)
+	packageInfo, err := p.scanPackageInfo()
+	if err != nil {
+		return nil, err
 	}
 
-	tok, lit = p.scanIgnoreWhitespace()
-	if tok != IDENT {
-		return nil, fmt.Errorf("expected IDENT, got %v", tok)
+	fidl.PackageInfo = packageInfo
+
+	interfaceInfo, err := p.scanInterfaceInfo()
+	if err != nil {
+		return nil, err
 	}
 
-	fidl.Package.Name = lit
-
-	tok, lit = p.scanIgnoreWhitespace()
-	var desc string
-	if tok == DESCRIPTION {
-		desc = lit
-		// ignore keyword "interface" after description
-		p.scanIgnoreWhitespace()
-	}
-
-	if tok != DESCRIPTION && tok != INTERFACE {
-		return nil, fmt.Errorf("expected interface definition but got %v: %v", tok, lit)
-	}
-
-	tok, lit = p.scanIgnoreWhitespace()
-
-	fidl.Interface.Description = desc
-	fidl.Interface.Name = lit
-
-	// TODO: scan interface version
+	fidl.InterfaceInfo = interfaceInfo
 
 	for {
 		innerTok, innerLit := p.scanIgnoreWhitespace()
@@ -137,13 +120,8 @@ func (p *Parser) Parse() (*Fidl, error) {
 				fidl.Attributes = []Attribute{}
 			}
 
-			attr := Attribute{
-				Description: description,
-			}
-			_, innerLit = p.scanIgnoreWhitespace()
-			attr.Type = innerLit
-			_, innerLit = p.scanIgnoreWhitespace()
-			attr.Name = innerLit
+			attr := p.scanAttribute()
+			attr.Description = description
 
 			fidl.Attributes = append(fidl.Attributes, attr)
 		case METHOD:
@@ -151,13 +129,8 @@ func (p *Parser) Parse() (*Fidl, error) {
 				fidl.Methods = []Method{}
 			}
 
-			meth := Method{
-				Description: description,
-			}
-			_, innerLit = p.scanIgnoreWhitespace()
-			meth.Name = innerLit
-
-			// TODO parse PARAMS
+			meth := p.scanMethod()
+			meth.Description = description
 
 			fidl.Methods = append(fidl.Methods, meth)
 		case BROADCAST:
@@ -165,13 +138,8 @@ func (p *Parser) Parse() (*Fidl, error) {
 				fidl.Broadcasts = []Broadcast{}
 			}
 
-			bc := Broadcast{
-				Description: description,
-			}
-			_, innerLit = p.scanIgnoreWhitespace()
-			bc.Name = innerLit
-
-			// TODO parse PARAMS
+			bc := p.scanBroadcast()
+			bc.Description = description
 
 			fidl.Broadcasts = append(fidl.Broadcasts, bc)
 		case STRUCT:
@@ -179,17 +147,12 @@ func (p *Parser) Parse() (*Fidl, error) {
 				fidl.Structs = []Struct{}
 			}
 
-			str := Struct{
-				Description: description,
-			}
-			_, innerLit = p.scanIgnoreWhitespace()
-			str.Name = innerLit
-
-			// TODO parse PARAMS
+			str := p.scanStruct()
+			str.Description = description
 
 			fidl.Structs = append(fidl.Structs, str)
 		default:
-			// ignore non known input for now
+			// ignore unknown input for now
 			continue
 
 		}
@@ -197,6 +160,191 @@ func (p *Parser) Parse() (*Fidl, error) {
 
 	// Return the successfully parsed FIDL.
 	return fidl, nil
+}
+
+func (p *Parser) scanPackageInfo() (*PackageInfo, error) {
+	packageInfo := &PackageInfo{}
+
+	// First token should be a "package" keyword.
+	tok, lit := p.scanIgnoreWhitespace()
+	if tok != PACKAGE {
+		return nil, fmt.Errorf("found %q, expected package", lit)
+	}
+
+	tok, lit = p.scanIgnoreWhitespace()
+	if tok != IDENT {
+		return nil, fmt.Errorf("expected IDENT, got %v", tok)
+	}
+
+	packageInfo.Name = lit
+
+	// TODO: scan optional imports
+
+	return packageInfo, nil
+}
+
+func (p *Parser) scanInterfaceInfo() (*InterfaceInfo, error) {
+	interfaceInfo := &InterfaceInfo{}
+
+	tok, lit := p.scanIgnoreWhitespace()
+	var desc string
+	if tok == DESCRIPTION {
+		desc = lit
+		// ignore keyword "interface" after description
+		p.scanIgnoreWhitespace()
+	}
+
+	if tok != DESCRIPTION && tok != INTERFACE {
+		return nil, fmt.Errorf("expected interface definition but got %v: %v", tok, lit)
+	}
+
+	tok, lit = p.scanIgnoreWhitespace()
+
+	interfaceInfo.Description = desc
+	interfaceInfo.Name = lit
+
+	// TODO: scan interface version
+
+	return interfaceInfo, nil
+}
+
+func (p *Parser) scanAttribute() Attribute {
+	attr := Attribute{}
+	_, lit := p.scanIgnoreWhitespace()
+	attr.Type = lit
+	tok, lit := p.scanIgnoreWhitespace()
+	if tok == SQUARE_BRACKET_OPEN {
+		attr.IsArray = true
+		// ignore SQUARE_BRACKET_CLOSE
+		p.scanIgnoreWhitespace()
+
+		// scan param name
+		_, lit = p.scanIgnoreWhitespace()
+		attr.Name = lit
+	} else {
+		attr.Name = lit
+	}
+
+	return attr
+}
+
+func (p *Parser) scanMethod() Method {
+	meth := Method{}
+	_, lit := p.scanIgnoreWhitespace()
+	meth.Name = lit
+	meth.In, meth.Out = p.scanParams()
+
+	return meth
+}
+
+func (p *Parser) scanBroadcast() Broadcast {
+	bc := Broadcast{}
+	_, lit := p.scanIgnoreWhitespace()
+	bc.Name = lit
+	_, bc.Out = p.scanParams()
+
+	return bc
+}
+
+func (p *Parser) scanStruct() Struct {
+	str := Struct{}
+	_, lit := p.scanIgnoreWhitespace()
+	str.Name = lit
+
+	str.Fields = p.scanStructParams()
+
+	return str
+}
+
+func (p *Parser) scanParam() Param {
+	param := Param{}
+
+	tok, lit := p.scanIgnoreWhitespace()
+	if tok == DESCRIPTION {
+		param.Description = lit
+		// scan param type
+		_, lit = p.scanIgnoreWhitespace()
+	}
+
+	param.Type = lit
+	tok, lit = p.scanIgnoreWhitespace()
+	if tok == SQUARE_BRACKET_OPEN {
+		param.IsArray = true
+		// ignore SQUARE_BRACKET_CLOSE
+		p.scanIgnoreWhitespace()
+
+		// scan param name
+		tok, lit = p.scanIgnoreWhitespace()
+		if tok == CIRCUMFLEX {
+			tok, lit = p.scanIgnoreWhitespace()
+			param.Name = fmt.Sprintf("^%s", lit)
+		} else {
+			param.Name = lit
+		}
+
+	} else {
+		if tok == CIRCUMFLEX {
+			tok, lit = p.scanIgnoreWhitespace()
+			param.Name = fmt.Sprintf("^%s", lit)
+		} else {
+			param.Name = lit
+		}
+	}
+
+	return param
+}
+
+func (p *Parser) scanParams() ([]Param, []Param) {
+	var inParams []Param
+	var outParams []Param
+	for {
+		tok, _ := p.scanIgnoreWhitespace()
+		if tok == CURLY_BRACKET_OPEN {
+			continue
+		}
+
+		if tok == IN {
+			for {
+				tok, _ = p.scanIgnoreWhitespace()
+				if tok == CURLY_BRACKET_OPEN {
+					continue
+				}
+
+				if tok == CURLY_BRACKET_CLOSE {
+					break
+				}
+
+				p.unscan()
+				param := p.scanParam()
+				inParams = append(inParams, param)
+			}
+
+			continue
+		}
+
+		if tok == OUT {
+			for {
+				tok, _ = p.scanIgnoreWhitespace()
+				if tok == CURLY_BRACKET_OPEN {
+					continue
+				}
+
+				if tok == CURLY_BRACKET_CLOSE {
+					break
+				}
+
+				p.unscan()
+				param := p.scanParam()
+				outParams = append(outParams, param)
+			}
+
+			continue
+		}
+
+		break
+	}
+
+	return inParams, outParams
 }
 
 // scan returns the next token from the underlying scanner.
@@ -228,4 +376,25 @@ func (p *Parser) scanIgnoreWhitespace() (tok Token, lit string) {
 	}
 
 	return
+}
+
+func (p *Parser) scanStructParams() []Param {
+	var params []Param
+
+	for {
+		tok, _ := p.scanIgnoreWhitespace()
+		if tok == CURLY_BRACKET_OPEN {
+			continue
+		}
+
+		if tok == CURLY_BRACKET_CLOSE {
+			break
+		}
+
+		p.unscan()
+		param := p.scanParam()
+		params = append(params, param)
+	}
+
+	return params
 }

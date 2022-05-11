@@ -12,10 +12,15 @@ const (
 	DESCRIPTION
 
 	// Misc characters
-	ASTERISK     // *
-	COMMA        // ,
-	QUOTE        // "
-	SINGLE_QUOTE // '
+	ASTERISK             // *
+	COMMA                // ,
+	QUOTE                // "
+	SINGLE_QUOTE         // '
+	CIRCUMFLEX           // ^
+	SQUARE_BRACKET_OPEN  // [
+	SQUARE_BRACKET_CLOSE // ]
+	CURLY_BRACKET_OPEN   // {
+	CURLY_BRACKET_CLOSE  // }
 
 	// Keywords
 	PACKAGE
