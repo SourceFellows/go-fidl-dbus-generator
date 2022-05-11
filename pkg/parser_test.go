@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"github.com/SourceFellows/go-fidl-dbus-generator/examples"
 	"testing"
 )
@@ -8,9 +9,10 @@ import (
 func TestParseFidl_Notofication(t *testing.T) {
 
 	//given
+	parser := NewParser(bytes.NewReader(examples.NotificationFidl))
 
 	//when
-	fidl, err := ParseFidl(examples.NotificationFidl)
+	fidl, err := parser.Parse()
 
 	//then
 	if err != nil {
@@ -34,9 +36,10 @@ func TestParseFidl_Notofication(t *testing.T) {
 func TestParseFidl_SystemManager(t *testing.T) {
 
 	//given
+	parser := NewParser(bytes.NewReader(examples.SystemManagerFidl))
 
 	//when
-	fidl, err := ParseFidl(examples.SystemManagerFidl)
+	fidl, err := parser.Parse()
 
 	//then
 	if err != nil {
@@ -51,16 +54,16 @@ func TestParseFidl_SystemManager(t *testing.T) {
 
 }
 
-func paramOfName(fidl *Fidl, name string) *Param {
+func paramOfName(fidl *Fidl, name string) Param {
 
-	for _, tr := range fidl.Entry.TypeRef {
-		for _, p := range tr.Method.Params.InParams {
+	for _, tr := range fidl.Methods {
+		for _, p := range tr.In {
 			if p.Name == name {
 				return p
 			}
 		}
 	}
 
-	return nil
+	return Param{}
 
 }

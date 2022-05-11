@@ -116,7 +116,7 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 		ch := s.read()
 		if ch == eof {
 			break
-		} else if !isLetter(ch) && !isDigit(ch) && ch != '.' {
+		} else if !isLetter(ch) && !isDigit(ch) && ch != '.' && ch != '_' {
 			s.unread()
 			break
 		} else {
@@ -130,6 +130,12 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 		return PACKAGE, buf.String()
 	case "interface":
 		return INTERFACE, buf.String()
+	case "version":
+		return VERSION, buf.String()
+	case "major":
+		return MAJOR, buf.String()
+	case "minor":
+		return MINOR, buf.String()
 	case "attribute":
 		return ATTRIBUTE, buf.String()
 	case "method":
@@ -142,6 +148,10 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 		return BROADCAST, buf.String()
 	case "struct":
 		return STRUCT, buf.String()
+	case "typedef":
+		return TYPEDEF, buf.String()
+	case "array":
+		return ARRAYDEF, buf.String()
 	}
 
 	// Otherwise return as a regular identifier.
