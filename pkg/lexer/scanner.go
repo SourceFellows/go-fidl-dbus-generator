@@ -128,6 +128,8 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 	switch buf.String() {
 	case "package":
 		return PACKAGE, buf.String()
+	case "import":
+		return IMPORT, buf.String()
 	case "interface":
 		return INTERFACE, buf.String()
 	case "version":

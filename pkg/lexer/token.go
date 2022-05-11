@@ -25,6 +25,7 @@ const (
 	// Keywords
 	PACKAGE
 	INTERFACE
+	IMPORT
 	VERSION
 	MAJOR
 	MINOR

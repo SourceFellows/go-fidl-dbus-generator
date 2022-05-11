@@ -22,7 +22,12 @@ type (
 
 	PackageInfo struct {
 		Name    string
-		Imports []string
+		Imports []Import
+	}
+
+	Import struct {
+		Path string
+		From string
 	}
 
 	InterfaceInfo struct {
@@ -212,7 +217,42 @@ func (p *Parser) scanPackageInfo() (*PackageInfo, error) {
 
 	packageInfo.Name = lit
 
-	// TODO: scan optional imports
+	var imports []Import
+	for {
+		tok, lit = p.scanIgnoreWhitespace()
+		if tok == lexer.IMPORT {
+			imp := Import{}
+			tok, lit = p.scanIgnoreWhitespace()
+			imp.Path = lit
+			tok, lit = p.scanIgnoreWhitespace()
+			if tok == lexer.ASTERISK {
+				imp.Path = fmt.Sprintf("%s%s", imp.Path, lit)
+				// ignore "from" keyword
+				p.scanIgnoreWhitespace()
+			}
+
+			tok, lit = p.scanIgnoreWhitespace()
+			if tok == lexer.QUOTE {
+				// ignore quote and continue scan
+				tok, lit = p.scanIgnoreWhitespace()
+			}
+
+			imp.From = lit
+			imports = append(imports, imp)
+
+			tok, lit = p.scanIgnoreWhitespace()
+			if tok != lexer.QUOTE {
+				p.unscan()
+			}
+
+			continue
+		}
+
+		p.unscan()
+		break
+	}
+
+	packageInfo.Imports = imports
 
 	return packageInfo, nil
 }
