@@ -81,30 +81,25 @@ func (impl *{{$ImplementationName}}) Close() error {
 {{end}}
 
 {{range .Broadcasts}}
-	func (impl *{{$ImplementationName}}) ListenFor{{exportNameOf .Name}} {{"(ctx context.Context " -}}) (chan any, error) {
+	func (impl *{{$ImplementationName}}) ListenFor{{exportNameOf .Name}} {{"(ctx context.Context " -}}) (chan *dbus.Signal, func(), error) {
 
-        conn, err := dbus.ConnectSessionBus()
+        err := impl.dbusConnection.AddMatchSignal(impl.broadcastMatchOptions...)
         if err != nil {
-            return nil, err
-        }
-
-        err = conn.AddMatchSignal(impl.broadcastMatchOptions...)
-        if err != nil {
-            return nil, err
+            return nil, nil, err
         }
 
         signalsChannel := make(chan *dbus.Signal)
-        conn.Signal(signalsChannel)
+        impl.dbusConnection.Signal(signalsChannel)
 
         var b interface{}
-        err = conn.Object(impl.destination, dbus.ObjectPath(impl.path)).
+        err = impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
             Call("{{$fqInterfaceName}}.subscribeFor{{.Name}}Selective", 0).
             Store(&b)
         if err != nil {
-            return nil, err
+            return nil, nil, err
         }
 
-        returnChan := make(chan any)
+        returnChan := make(chan *dbus.Signal)
         go func() {
             for {
                 sig := <-signalsChannel
@@ -114,7 +109,9 @@ func (impl *{{$ImplementationName}}) Close() error {
             }
         }()
 
-        return returnChan, nil
+        return returnChan, func() {
+            impl.dbusConnection.RemoveSignal(signalsChannel)
+        },nil
 
 	}
 {{end}}
