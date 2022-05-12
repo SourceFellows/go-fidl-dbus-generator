@@ -15,14 +15,14 @@ func New{{exportNameOf $ImplementationName}}Client(dest, path string) (*{{$Imple
 
     return &{{$ImplementationName}}{
         dbusConnection: conn,
-        destionation: dest,
+        destination: dest,
         path: path,
     },nil
 }
 
 type {{$ImplementationName}} struct {
     dbusConnection *dbus.Conn
-    destionation string
+    destination string
     path string
 }
 
@@ -47,9 +47,10 @@ func (impl *{{$ImplementationName}}) Close() error {
             var {{goType $param.Name}} {{goType $param.Type}}
         {{end}}
 
-    	err := conn.Object(impl.destination, impl.path).
+    	err := impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
     		Call("{{$fqInterfaceName}}.{{.Name}}{{"\"" -}}
-    		 {{- range $idx, $param := .In -}}
+    		, 0
+    		{{- range $idx, $param := .In -}}
                 , {{nameify $param.Name -}}
             {{- end}}).
     		Store(
