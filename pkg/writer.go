@@ -73,6 +73,7 @@ func mapFidlTypeToGoType(fidlString string) string {
 
 	mappings := map[string]string{}
 	mappings["String"] = "string"
+	mappings["Boolean"] = "bool"
 	mappings["UInt8"] = "uint8"
 	mappings["UInt16"] = "uint16"
 
