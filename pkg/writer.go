@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"github.com/SourceFellows/go-fidl-dbus-generator/pkg/templates"
 	"go/format"
 	"io"
 	"strings"
@@ -11,10 +12,16 @@ import (
 	"unicode"
 )
 
-//go:embed Client-template.gotmpl
-var clientTemplate string
+type WriterType struct {
+	template string
+}
 
-func Write(fidl *Fidl, writer io.Writer) error {
+var (
+	ServerWriter = WriterType{templates.ServerTemplate}
+	ClientWriter = WriterType{templates.ClientTemplate}
+)
+
+func Write(fidl *Fidl, writerType WriterType, writer io.Writer) error {
 
 	funcs := template.FuncMap{
 		"nameify":      toGoIdentifierName,
@@ -25,7 +32,7 @@ func Write(fidl *Fidl, writer io.Writer) error {
 
 	tmpl, err := template.New("type").
 		Funcs(funcs).
-		Parse(clientTemplate)
+		Parse(writerType.template)
 
 	if err != nil {
 		return err
@@ -45,7 +52,7 @@ func Write(fidl *Fidl, writer io.Writer) error {
 		return err
 	}
 
-	fmt.Println(string(src))
+	fmt.Print(string(src))
 	return nil
 }
 
