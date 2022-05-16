@@ -40,7 +40,7 @@ func (impl *{{$ImplementationName}}) Close() error {
 
 {{range .Methods}}
 
-    func (impl *{{$ImplementationName}}) {{exportNameOf .Name}} {{"(" -}}
+    func (impl *{{$ImplementationName}}) {{exportNameOf .Name}} {{"(ctx context.Context, " -}}
     {{- $paramCountIn := len .In}}
     {{- $paramCountOut := len .Out}}
 
@@ -56,7 +56,7 @@ func (impl *{{$ImplementationName}}) Close() error {
         {{end}}
 
     	err := impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
-    		Call("{{$fqInterfaceName}}.{{.Name}}{{"\"" -}}
+    		CallWithContext(ctx, "{{$fqInterfaceName}}.{{.Name}}{{"\"" -}}
     		, 0
     		{{- range $idx, $param := .In -}}
                 , {{nameify $param.Name -}}
