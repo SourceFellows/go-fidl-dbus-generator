@@ -93,7 +93,7 @@ func (impl *{{$ImplementationName}}) Close() error {
 
         var b interface{}
         err = impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
-            Call("{{$fqInterfaceName}}.subscribeFor{{.Name}}Selective", 0).
+            CallWithContext(ctx, "{{$fqInterfaceName}}.subscribeFor{{.Name}}Selective", 0).
             Store(&b)
         if err != nil {
             return nil, nil, err
