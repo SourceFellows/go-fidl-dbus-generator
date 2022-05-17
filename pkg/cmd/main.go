@@ -13,6 +13,8 @@ func main() {
 
 	inFile := flag.String("in", "", "path to FIDL file to parse")
 
+	packageName := flag.String("package", "", "package to generate the result in")
+
 	var writerType pkg.WriterType
 	generateServer := flag.Bool("server", false, "generate server impl")
 	generateClient := flag.Bool("client", false, "generate client impl")
@@ -60,6 +62,10 @@ func main() {
 
 	if debug != nil && *debug {
 		repr.Println(fidl)
+	}
+
+	if *packageName != "" {
+		fidl.PackageInfo.Name = *packageName
 	}
 
 	err = pkg.Write(fidl, writerType, os.Stdout)

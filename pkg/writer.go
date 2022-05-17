@@ -24,10 +24,11 @@ var (
 func Write(fidl *Fidl, writerType WriterType, writer io.Writer) error {
 
 	funcs := template.FuncMap{
-		"nameify":      toGoIdentifierName,
-		"exportNameOf": exportNameOf,
-		"goType":       mapFidlTypeToGoType,
-		"derefStr":     deref,
+		"nameify":               toGoIdentifierName,
+		"extractLastPartOfName": extractLastPartOfName,
+		"exportNameOf":          exportNameOf,
+		"goType":                mapFidlTypeToGoType,
+		"derefStr":              deref,
 	}
 
 	tmpl, err := template.New("type").
@@ -45,15 +46,13 @@ func Write(fidl *Fidl, writerType WriterType, writer io.Writer) error {
 		return err
 	}
 
-	//fmt.Println(string(bites.Bytes()))
-
 	src, err := format.Source(bites.Bytes())
 	if err != nil {
 		return err
 	}
 
-	fmt.Print(string(src))
-	return nil
+	_, err = writer.Write(src)
+	return err
 }
 
 func toGoIdentifierName(typeName string) string {
@@ -92,4 +91,12 @@ func mapFidlTypeToGoType(fidlString string) string {
 
 func deref(val *string) any {
 	return *val
+}
+
+func extractLastPartOfName(val string) string {
+	idx := strings.LastIndex(val, ".")
+	if idx == -1 {
+		return val
+	}
+	return val[idx+1:]
 }
