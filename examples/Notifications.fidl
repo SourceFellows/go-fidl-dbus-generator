@@ -15,7 +15,7 @@ interface Notifications {
          String summary
          String body
          String []actions
-         Hint [] hints
+         Hint hints
          Int32 expire_timeout
       }
       out {
