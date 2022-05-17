@@ -10,6 +10,7 @@ import (
 // Fidl represents a FIDL file.
 type (
 	Fidl struct {
+		TargetPackage string
 		PackageInfo   *PackageInfo
 		InterfaceInfo *InterfaceInfo
 		Attributes    []Attribute

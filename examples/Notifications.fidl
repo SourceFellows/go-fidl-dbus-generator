@@ -14,9 +14,9 @@ interface Notifications {
          String app_icon
          String summary
          String body
-         String [] actions
+         String []actions
          Hint [] hints
-         UInt32 expire_timeout
+         Int32 expire_timeout
       }
       out {
          UInt8 result
