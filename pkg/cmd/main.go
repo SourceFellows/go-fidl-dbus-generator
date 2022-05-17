@@ -65,7 +65,9 @@ func main() {
 	}
 
 	if *packageName != "" {
-		fidl.PackageInfo.Name = *packageName
+		fidl.TargetPackage = *packageName
+	} else {
+		fidl.TargetPackage = fidl.PackageInfo.Name
 	}
 
 	err = pkg.Write(fidl, writerType, os.Stdout)
