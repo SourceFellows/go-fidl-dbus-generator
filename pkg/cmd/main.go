@@ -12,6 +12,7 @@ import (
 func main() {
 
 	inFile := flag.String("in", "", "path to FIDL file to parse")
+	outFile := flag.String("out", "", "path to generated file")
 
 	packageName := flag.String("package", "", "package to generate the result in")
 
@@ -70,7 +71,16 @@ func main() {
 		fidl.TargetPackage = fidl.PackageInfo.Name
 	}
 
-	err = pkg.Write(fidl, writerType, os.Stdout)
+	out := os.Stdout
+	if outFile != nil && *outFile != "" {
+		out, err = os.OpenFile(*outFile, os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer out.Close()
+	}
+
+	err = pkg.Write(fidl, writerType, out)
 	if err != nil {
 		log.Fatalln(err)
 	}
