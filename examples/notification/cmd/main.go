@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	notificationsClient, err := notification.NewNotificationsClient("org.freedesktop.Notifications",
+	notificationsClient, err := notification.NewNotificationsSender("org.freedesktop.Notifications",
 		"/org/freedesktop/Notifications")
 	if err != nil {
 		log.Fatal(err)

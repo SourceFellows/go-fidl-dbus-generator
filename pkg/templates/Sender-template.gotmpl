@@ -5,7 +5,7 @@
 package {{extractLastPartOfName .TargetPackage}}
 
 import (
-	"fmt"
+	{{if .Broadcasts }}"fmt" {{end}}
 	"context"
 	"github.com/godbus/dbus/v5"
 )
