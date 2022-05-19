@@ -154,6 +154,8 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 		return TYPEDEF, buf.String()
 	case "array":
 		return ARRAYDEF, buf.String()
+	case "selective":
+		return SELECTIVE, buf.String()
 	}
 
 	// Otherwise return as a regular identifier.

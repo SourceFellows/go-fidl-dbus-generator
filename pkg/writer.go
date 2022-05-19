@@ -17,8 +17,8 @@ type WriterType struct {
 }
 
 var (
-	ServerWriter = WriterType{templates.ServerTemplate}
-	ClientWriter = WriterType{templates.ClientTemplate}
+	ReceiverWriter = WriterType{templates.ReceiverTemplate}
+	SenderWriter   = WriterType{templates.SenderTemplate}
 )
 
 func Write(fidl *Fidl, writerType WriterType, writer io.Writer) error {
@@ -86,6 +86,7 @@ func mapFidlTypeToGoType(fidlString string) string {
 	mappings["Int8"] = "int8"
 	mappings["Int16"] = "int16"
 	mappings["Int32"] = "int32"
+	mappings["Int64"] = "int64"
 
 	if v, ok := mappings[fidlString]; ok {
 		return v

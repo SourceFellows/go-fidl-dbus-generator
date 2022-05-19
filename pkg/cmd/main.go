@@ -16,8 +16,8 @@ func main() {
 	packageName := flag.String("package", "", "package to generate the result in")
 
 	var writerType pkg.WriterType
-	generateServer := flag.Bool("server", false, "generate server impl")
-	generateClient := flag.Bool("client", false, "generate client impl")
+	generateReceiver := flag.Bool("receiver", false, "generate receiver impl")
+	generateSender := flag.Bool("sender", false, "generate sender impl")
 
 	debug := flag.Bool("debug", false, "debug mode")
 
@@ -29,22 +29,22 @@ func main() {
 		return
 	}
 
-	if (generateServer != nil && generateClient != nil) && (!*generateServer && !*generateClient) {
-		log.Println("you should decide if you want a server or client impl")
+	if (generateReceiver != nil && generateSender != nil) && (!*generateReceiver && !*generateSender) {
+		log.Println("you should decide if you want a receiver or sender impl")
 		flag.PrintDefaults()
 		return
 	}
 
-	if *generateServer && *generateClient {
-		log.Println("you can generate server OR client impl")
+	if *generateReceiver && *generateSender {
+		log.Println("you can generate receiver OR sender impl")
 		flag.PrintDefaults()
 		return
 	}
 
-	if *generateClient {
-		writerType = pkg.ClientWriter
+	if *generateSender {
+		writerType = pkg.SenderWriter
 	} else {
-		writerType = pkg.ServerWriter
+		writerType = pkg.ReceiverWriter
 	}
 
 	file, err := os.Open(*inFile)

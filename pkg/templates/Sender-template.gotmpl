@@ -8,7 +8,7 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
-func New{{exportNameOf $ImplementationName}}Client(dest, path string) (*{{$ImplementationName}}, error) {
+func New{{exportNameOf $ImplementationName}}Sender(dest, path string) (*{{$ImplementationName}}, error) {
 
     conn, err := dbus.ConnectSessionBus()
     if err != nil {
@@ -23,7 +23,7 @@ func New{{exportNameOf $ImplementationName}}Client(dest, path string) (*{{$Imple
     return &{{$ImplementationName}}{
         dbusConnection: conn,
         destination: dest,
-        path: path,
+        path: dbus.ObjectPath(path),
         broadcastMatchOptions: broadcastMatchOptions,
     },nil
 }
@@ -31,7 +31,7 @@ func New{{exportNameOf $ImplementationName}}Client(dest, path string) (*{{$Imple
 type {{$ImplementationName}} struct {
     dbusConnection          *dbus.Conn
     destination             string
-    path                    string
+    path                    dbus.ObjectPath
     broadcastMatchOptions   []dbus.MatchOption
 }
 
@@ -56,7 +56,7 @@ func (impl *{{$ImplementationName}}) Close() error {
             var {{goType $param.Name}} {{if $param.IsArray}}[]{{end}}{{goType $param.Type}}
         {{end}}
 
-    	err := impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
+    	err := impl.dbusConnection.Object(impl.destination, impl.path).
     		CallWithContext(ctx, "{{$fqInterfaceName}}.{{.Name}}{{"\"" -}}
     		, 0
     		{{- range $idx, $param := .In -}}
@@ -82,35 +82,47 @@ func (impl *{{$ImplementationName}}) Close() error {
 {{end}}
 
 {{range .Broadcasts}}
-	func (impl *{{$ImplementationName}}) ListenFor{{exportNameOf .Name}} {{"(ctx context.Context " -}}) (chan *dbus.Signal, func(), error) {
 
-        err := impl.dbusConnection.AddMatchSignal(impl.broadcastMatchOptions...)
-        if err != nil {
-            return nil, nil, err
-        }
+    {{if .IsSelective}}
+        func (impl *{{$ImplementationName}}) Send{{exportNameOf .Name}}Signal {{"(target dbus.Destination, " -}}
+        {{- $paramCountIn := len .Out}}
 
-        signalsChannel := make(chan *dbus.Signal)
-        impl.dbusConnection.Signal(signalsChannel)
+        {{- range $idx, $param := .Out -}}
+            {{nameify $param.Name}} {{if $param.IsArray}}[]{{end}}{{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
+        {{- end}} {{")  error {" }}
 
-        var b interface{}
-        err = impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
-            CallWithContext(ctx, "{{$fqInterfaceName}}.subscribeFor{{.Name}}Selective", 0).
-            Store(&b)
-        if err != nil {
-            return nil, nil, err
-        }
-
-        returnChan := make(chan *dbus.Signal)
-        go func() {
-            for {
-                sig := <-signalsChannel
-                if strings.Contains(sig.Name, "{{.Name}}") {
-                    returnChan <- sig
-                }
+            name := fmt.Sprintf("%s.%s", "{{$fqInterfaceName}}", "{{.Name}}")
+            err := impl.dbusConnection.EmitWithDestination(impl.path, name, target
+            {{- range $idx, $param := .Out -}}
+                , {{nameify $param.Name -}}
+            {{- end}})
+            if err != nil {
+                return fmt.Errorf("error occurred while sending signal: %w", err)
             }
-        }()
 
-        return returnChan, func() {
-            impl.dbusConnection.RemoveSignal(signalsChannel)
-        },nil
+            return nil
+
+        }
+    {{else}}
+        func (impl *{{$ImplementationName}}) Send{{exportNameOf .Name}}Signal {{"(" -}}
+        {{- $paramCountIn := len .Out}}
+
+        {{- range $idx, $param := .Out -}}
+            {{nameify $param.Name}} {{if $param.IsArray}}[]{{end}}{{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
+        {{- end}} {{")  error {" }}
+
+            name := fmt.Sprintf("%s.%s", "{{$fqInterfaceName}}", "{{.Name}}")
+            err := impl.dbusConnection.Emit(impl.path, name
+            {{- range $idx, $param := .Out -}}
+                , {{nameify $param.Name -}}
+            {{- end}})
+            if err != nil {
+                return fmt.Errorf("error occurred while sending signal: %w", err)
+            }
+
+            return nil
+
+        }
+    {{end}}
+
 {{end -}}

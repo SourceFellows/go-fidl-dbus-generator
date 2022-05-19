@@ -55,6 +55,7 @@ type (
 	Broadcast struct {
 		Description string
 		Name        string
+		IsSelective bool
 		Out         []Param
 	}
 
@@ -351,6 +352,15 @@ func (p *Parser) scanBroadcast() Broadcast {
 	bc := Broadcast{}
 	_, lit := p.scanIgnoreWhitespace()
 	bc.Name = lit
+
+	tok, lit := p.scanIgnoreWhitespace()
+	if tok == lexer.SELECTIVE {
+		fmt.Println("### selective", lit)
+		bc.IsSelective = true
+	} else {
+		p.unscan()
+	}
+
 	_, bc.Out = p.scanParams()
 
 	return bc

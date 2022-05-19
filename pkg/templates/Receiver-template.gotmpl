@@ -7,7 +7,7 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
-func New{{exportNameOf $ImplementationName}}Client(dest, path string) (*{{$ImplementationName}}, error) {
+func New{{exportNameOf $ImplementationName}}Receiver(dest, path string) (*{{$ImplementationName}}, error) {
 
     conn, err := dbus.ConnectSessionBus()
     if err != nil {
@@ -83,35 +83,36 @@ func (impl *{{$ImplementationName}}) Close() error {
 {{range .Broadcasts}}
 	func (impl *{{$ImplementationName}}) ListenFor{{exportNameOf .Name}} {{"(ctx context.Context " -}}) (chan *dbus.Signal, func(), error) {
 
-        err := impl.dbusConnection.AddMatchSignal(impl.broadcastMatchOptions...)
-        if err != nil {
-            return nil, nil, err
-        }
+    err := impl.dbusConnection.AddMatchSignal(impl.broadcastMatchOptions...)
+    if err != nil {
+        return nil, nil, err
+    }
 
-        signalsChannel := make(chan *dbus.Signal)
-        impl.dbusConnection.Signal(signalsChannel)
+    signalsChannel := make(chan *dbus.Signal)
+    impl.dbusConnection.Signal(signalsChannel)
 
-        var b interface{}
-        err = impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
-            CallWithContext(ctx, "{{$fqInterfaceName}}.subscribeFor{{.Name}}Selective", 0).
-            Store(&b)
-        if err != nil {
-            return nil, nil, err
-        }
+	{{if .IsSelective}}
+    var b interface{}
+    err = impl.dbusConnection.Object(impl.destination, dbus.ObjectPath(impl.path)).
+        CallWithContext(ctx, "{{$fqInterfaceName}}.subscribeFor{{.Name}}Selective", 0).
+        Store(&b)
+    if err != nil {
+        return nil, nil, err
+    }
+	{{end}}
 
-        returnChan := make(chan *dbus.Signal)
-        go func() {
-            for {
-                sig := <-signalsChannel
-                if strings.Contains(sig.Name, "{{.Name}}") {
-                    returnChan <- sig
-                }
+    returnChan := make(chan *dbus.Signal)
+    go func() {
+        for {
+            sig := <-signalsChannel
+            if strings.Contains(sig.Name, "{{.Name}}") {
+                returnChan <- sig
             }
-        }()
+        }
+    }()
 
-        return returnChan, func() {
-            impl.dbusConnection.RemoveSignal(signalsChannel)
-        },nil
-
-	}
-{{end}}
+    return returnChan, func() {
+        impl.dbusConnection.RemoveSignal(signalsChannel)
+    }, nil
+}
+{{end -}}
