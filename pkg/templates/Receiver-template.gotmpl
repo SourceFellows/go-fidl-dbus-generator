@@ -23,6 +23,10 @@ type {{exportNameOf $ImplementationName}} interface {
         {{if $param.IsArray}}[]{{end}}{{goType $param.Type}} {{if $idx = $paramCountOut}},{{end -}}
         {{end -}} {{ "error)" -}}
     {{end}}
+
+    {{range .Broadcasts}}
+        ListenFor{{exportNameOf .Name}} {{"(ctx context.Context ) (chan *dbus.Signal, func(), error)" -}}
+	{{end}}
 }
 
 func New{{exportNameOf $ImplementationName}}(dest, path string) (*{{$ImplementationName}}, error) {

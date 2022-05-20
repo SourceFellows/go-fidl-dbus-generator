@@ -39,7 +39,7 @@ type {{exportNameOf $ImplementationName}} interface {
 	{{end}}
 }
 
-func NewDBus{{exportNameOf $ImplementationName}}(dest, path string) (*{{$ImplementationName}}, error) {
+func New{{exportNameOf $ImplementationName}}(dest, path string) (*{{$ImplementationName}}, error) {
 
     conn, err := dbus.ConnectSessionBus()
     if err != nil {
