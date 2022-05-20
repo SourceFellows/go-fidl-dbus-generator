@@ -10,7 +10,36 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
-func New{{exportNameOf $ImplementationName}}(dest, path string) (*{{$ImplementationName}}, error) {
+type {{exportNameOf $ImplementationName}} interface {
+    {{range .Methods}}
+    {{exportNameOf .Name}} {{"(ctx context.Context, " -}}
+        {{- $paramCountIn := len .In}}
+        {{- $paramCountOut := len .Out}}
+        {{- range $idx, $param := .In -}}
+        {{nameify $param.Name}} {{if $param.IsArray}}[]{{end}}{{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
+        {{- end}} {{") (" -}}
+        {{- range $idx, $param := .Out -}}
+        {{if $param.IsArray}}[]{{end}}{{goType $param.Type}} {{if $idx = $paramCountOut}},{{end -}}
+        {{end -}} {{ "error)" -}}
+    {{end}}
+    {{range .Broadcasts}}
+        {{if .IsSelective}}
+            Send{{exportNameOf .Name}}Signal {{"(target dbus.Destination, " -}}
+            {{- $paramCountIn := len .Out}}
+            {{- range $idx, $param := .Out -}}
+            {{nameify $param.Name}} {{if $param.IsArray}}[]{{end}}{{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
+            {{- end}} {{")  error" -}}
+        {{ else -}}
+            Send{{exportNameOf .Name}}Signal {{"(" -}}
+            {{- $paramCountIn := len .Out}}
+            {{- range $idx, $param := .Out -}}
+            {{nameify $param.Name}} {{if $param.IsArray}}[]{{end}}{{goType $param.Type}} {{if $idx = $paramCountIn}},{{end -}}
+            {{- end}} {{")  error" -}}
+		{{ end -}}
+	{{end}}
+}
+
+func NewDBus{{exportNameOf $ImplementationName}}(dest, path string) (*{{$ImplementationName}}, error) {
 
     conn, err := dbus.ConnectSessionBus()
     if err != nil {
