@@ -37,6 +37,8 @@ type {{exportNameOf $ImplementationName}} interface {
             {{- end}} {{")  error" -}}
 		{{ end -}}
 	{{end}}
+
+	Close() error
 }
 
 func New{{exportNameOf $ImplementationName}}(dest, path string) (*{{$ImplementationName}}, error) {

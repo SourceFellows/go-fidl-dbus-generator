@@ -27,6 +27,8 @@ type {{exportNameOf $ImplementationName}} interface {
     {{range .Broadcasts}}
         ListenFor{{exportNameOf .Name}} {{"(ctx context.Context ) (chan *dbus.Signal, func(), error)" -}}
 	{{end}}
+
+	Close() error
 }
 
 func New{{exportNameOf $ImplementationName}}(dest, path string) (*{{$ImplementationName}}, error) {
