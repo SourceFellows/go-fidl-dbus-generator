@@ -49,6 +49,21 @@ func New{{exportNameOf $ImplementationName}}(dest, path string) (*{{$Implementat
     },nil
 }
 
+func New{{exportNameOf $ImplementationName}}WithConnection(conn *dbus.Conn, dest, path string) (*{{$ImplementationName}}, error) {
+
+    broadcastMatchOptions := []dbus.MatchOption{
+        dbus.WithMatchObjectPath(dbus.ObjectPath(path)),
+        dbus.WithMatchInterface("{{$fqInterfaceName}}"),
+    }
+
+    return &{{$ImplementationName}}{
+        dbusConnection: conn,
+        destination: dest,
+        path: path,
+        broadcastMatchOptions: broadcastMatchOptions,
+    },nil
+}
+
 type {{$ImplementationName}} struct {
     dbusConnection          *dbus.Conn
     destination             string
