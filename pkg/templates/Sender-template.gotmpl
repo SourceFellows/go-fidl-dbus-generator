@@ -159,3 +159,17 @@ func (impl *{{$ImplementationName}}) Close() error {
     {{end}}
 
 {{end}}
+
+{{range .Attributes}}
+    func (impl *{{$ImplementationName}}) Get{{exportNameOf .Name}} {{"(ctx context.Context) (" -}} {{if .IsArray}}[]{{end}}{{goType .Type}} {{", error) {" -}}
+
+        var result {{if .IsArray}}[]{{end}}{{goType .Type}}
+
+        err := impl.dbusConnection.Object(impl.destination, impl.path).
+        CallWithContext(ctx, "{{$fqInterfaceName}}.get{{.Name}}{{"Attribute\"" -}}
+		, 0).
+        Store(&result)
+
+	    return result, err
+    }
+{{end}}

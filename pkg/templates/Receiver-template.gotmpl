@@ -6,7 +6,7 @@ package {{extractLastPartOfName .TargetPackage}}
 
 import (
 	"context"
-	"strings"
+    {{if .Broadcasts }}"strings"{{end}}
 	"github.com/godbus/dbus/v5"
 )
 
