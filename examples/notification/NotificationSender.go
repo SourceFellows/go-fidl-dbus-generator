@@ -7,6 +7,12 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+type NotificationsSender interface {
+	Notify(ctx context.Context, app_name string, replaces_id uint32, app_icon string, summary string, body string, actions []string, hints Hint, expire_timeout int32) (uint8, error)
+
+	Close() error
+}
+
 func NewNotificationsSender(dest, path string) (*notificationsSender, error) {
 
 	conn, err := dbus.ConnectSessionBus()

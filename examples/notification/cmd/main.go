@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/SourceFellows/go-fidl-dbus-generator/example/notification"
 	"log"
-	"notification"
 )
+
+//go:generate go-fidl -sender -package notification -in ../../Notifications.fidl -out ../NotificationSender.go
 
 func main() {
 
@@ -14,6 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer notificationsClient.Close()
 
 	notify, err := notificationsClient.Notify(context.Background(),
 		"app",

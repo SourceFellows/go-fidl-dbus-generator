@@ -1,4 +1,4 @@
-module notification
+module github.com/SourceFellows/go-fidl-dbus-generator/example/notification
 
 go 1.18
 
