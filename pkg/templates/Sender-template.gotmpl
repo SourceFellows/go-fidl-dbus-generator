@@ -38,6 +38,10 @@ type {{exportNameOf $ImplementationName}} interface {
 		{{ end -}}
 	{{end}}
 
+    {{range .Attributes}}
+        Get{{exportNameOf .Name}} {{"(ctx context.Context) (" -}} {{if .IsArray}}[]{{end}}{{goType .Type}} {{", error)" -}}
+    {{end}}
+
 	Close() error
 }
 
