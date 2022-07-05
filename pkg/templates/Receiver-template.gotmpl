@@ -143,9 +143,14 @@ func (impl *{{$ImplementationName}}) Close() error {
     returnChan := make(chan *dbus.Signal)
     go func() {
         for {
-            sig := <-signalsChannel
-            if strings.Contains(sig.Name, "{{.Name}}") {
-                returnChan <- sig
+            select {
+            case sig := <-signalsChannel:
+                if strings.Contains(sig.Name, "{{.Name}}") {
+                    returnChan <- sig
+                }
+            case <- ctx.Done():
+                close(signalsChannel)
+                return
             }
         }
     }()
