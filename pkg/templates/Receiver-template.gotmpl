@@ -6,6 +6,7 @@ package {{extractLastPartOfName .TargetPackage}}
 
 import (
 	"context"
+    {{if .Broadcasts }}"sync"{{end}}
     {{if .Broadcasts }}"strings"{{end}}
 	"github.com/godbus/dbus/v5"
 )
@@ -140,24 +141,29 @@ func (impl *{{$ImplementationName}}) Close() error {
     }
 	{{end}}
 
+    onceFunc := sync.Once{}
+    clean := func() {
+        impl.dbusConnection.RemoveSignal(signalsChannel)
+        close(signalsChannel)
+    }
+
     returnChan := make(chan *dbus.Signal)
     go func() {
         for {
             select {
-            case sig := <-signalsChannel:
-                if strings.Contains(sig.Name, "{{.Name}}") {
+            case sig, ok := <-signalsChannel:
+                if ok && strings.Contains(sig.Name, "{{.Name}}") {
                     returnChan <- sig
                 }
             case <- ctx.Done():
-                close(signalsChannel)
-                impl.dbusConnection.Close()
+                onceFunc.Do(clean)
                 return
             }
         }
     }()
 
     return returnChan, func() {
-        impl.dbusConnection.RemoveSignal(signalsChannel)
+        onceFunc.Do(clean)
     }, nil
 }
 {{end -}}
