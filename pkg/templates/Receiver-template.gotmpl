@@ -150,6 +150,7 @@ func (impl *{{$ImplementationName}}) Close() error {
                 }
             case <- ctx.Done():
                 close(signalsChannel)
+                impl.dbusConnection.Close()
                 return
             }
         }
