@@ -35,6 +35,9 @@ func Write(fidl *Fidl, writerType WriterType, writer io.Writer) error {
 		Funcs(funcs).
 		Parse(writerType.template)
 
+	tmpl.New("DBusInterface").Parse(templates.DBusInterfaceTemplate)
+	tmpl.New("Struct").Parse(templates.StructTemplate)
+
 	if err != nil {
 		return err
 	}

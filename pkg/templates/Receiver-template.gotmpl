@@ -11,6 +11,9 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+{{template "DBusInterface" .}}
+{{template "Struct"}}
+
 type {{exportNameOf $ImplementationName}} interface {
     {{range .Methods}}
         {{exportNameOf .Name}} {{"(ctx context.Context, " -}}
@@ -144,7 +147,9 @@ func (impl *{{$ImplementationName}}) Close() error {
     onceFunc := sync.Once{}
     clean := func() {
         impl.dbusConnection.RemoveSignal(signalsChannel)
-        close(signalsChannel)
+        if impl.dbusConnection.Connected() {
+            close(signalsChannel)
+        }
     }
 
     returnChan := make(chan *dbus.Signal)
