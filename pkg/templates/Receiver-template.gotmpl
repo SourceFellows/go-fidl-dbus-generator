@@ -159,6 +159,9 @@ func (impl *{{$ImplementationName}}) Close() error {
             case sig, ok := <-signalsChannel:
                 if ok && strings.Contains(sig.Name, "{{.Name}}") {
                     returnChan <- sig
+                } else if !ok {
+                    onceFunc.Do(clean)
+					return
                 }
             case <- ctx.Done():
                 onceFunc.Do(clean)
