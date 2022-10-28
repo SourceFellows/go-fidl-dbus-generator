@@ -6,7 +6,6 @@ package {{extractLastPartOfName .TargetPackage}}
 
 import (
 	"context"
-    {{if .Broadcasts }}"sync"{{end}}
     {{if .Broadcasts }}"strings"{{end}}
 	"github.com/godbus/dbus/v5"
 )
@@ -29,7 +28,7 @@ type {{exportNameOf $ImplementationName}} interface {
     {{end}}
 
     {{range .Broadcasts}}
-        ListenFor{{exportNameOf .Name}} {{"(ctx context.Context ) (chan *dbus.Signal, func(), error)" -}}
+        ListenFor{{exportNameOf .Name}} {{"(ctx context.Context ) (chan *dbus.Signal, error)" -}}
 	{{end}}
 
 	Close() error
@@ -124,11 +123,11 @@ func (impl *{{$ImplementationName}}) Close() error {
 {{end}}
 
 {{range .Broadcasts}}
-	func (impl *{{$ImplementationName}}) ListenFor{{exportNameOf .Name}} {{"(ctx context.Context " -}}) (chan *dbus.Signal, func(), error) {
+	func (impl *{{$ImplementationName}}) ListenFor{{exportNameOf .Name}} {{"(ctx context.Context " -}}) (chan *dbus.Signal, error) {
 
     err := impl.dbusConnection.AddMatchSignal(impl.broadcastMatchOptions...)
     if err != nil {
-        return nil, nil, err
+        return nil,  err
     }
 
     signalsChannel := make(chan *dbus.Signal)
@@ -140,38 +139,35 @@ func (impl *{{$ImplementationName}}) Close() error {
         CallWithContext(ctx, "{{$fqInterfaceName}}.subscribeFor{{.Name}}Selective", 0).
         Store(&b)
     if err != nil {
-        return nil, nil, err
+        return nil, err
     }
 	{{end}}
 
-    onceFunc := sync.Once{}
+    returnChan := make(chan *dbus.Signal)
     clean := func() {
         impl.dbusConnection.RemoveSignal(signalsChannel)
         if impl.dbusConnection.Connected() {
             close(signalsChannel)
         }
+		close(returnChan)
     }
 
-    returnChan := make(chan *dbus.Signal)
     go func() {
+		defer clean()
         for {
             select {
             case sig, ok := <-signalsChannel:
                 if ok && strings.Contains(sig.Name, "{{.Name}}") {
                     returnChan <- sig
                 } else if !ok {
-                    onceFunc.Do(clean)
 					return
                 }
             case <- ctx.Done():
-                onceFunc.Do(clean)
                 return
             }
         }
     }()
 
-    return returnChan, func() {
-        onceFunc.Do(clean)
-    }, nil
+    return returnChan, nil
 }
 {{end -}}
