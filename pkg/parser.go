@@ -46,10 +46,11 @@ type (
 	}
 
 	Method struct {
-		Description string
-		Name        string
-		In          []Param
-		Out         []Param
+		Description   string
+		Name          string
+		FireAndForget bool
+		In            []Param
+		Out           []Param
 	}
 
 	Broadcast struct {
@@ -343,7 +344,7 @@ func (p *Parser) scanMethod() Method {
 	meth := Method{}
 	_, lit := p.scanIgnoreWhitespace()
 	meth.Name = lit
-	meth.In, meth.Out = p.scanParams()
+	meth.In, meth.Out, meth.FireAndForget = p.scanParams()
 
 	return meth
 }
@@ -361,7 +362,7 @@ func (p *Parser) scanBroadcast() Broadcast {
 		p.unscan()
 	}
 
-	_, bc.Out = p.scanParams()
+	_, bc.Out, _ = p.scanParams()
 
 	return bc
 }
@@ -442,12 +443,18 @@ func (p *Parser) scanParam() Param {
 	return param
 }
 
-func (p *Parser) scanParams() ([]Param, []Param) {
+func (p *Parser) scanParams() ([]Param, []Param, bool) {
 	var inParams []Param
 	var outParams []Param
+	fireAndForget := false
 	for {
 		tok, _ := p.scanIgnoreWhitespace()
 		if tok == lexer.CURLY_BRACKET_OPEN {
+			continue
+		}
+
+		if tok == lexer.FIRE_AND_FORGET {
+			fireAndForget = true
 			continue
 		}
 
@@ -470,7 +477,7 @@ func (p *Parser) scanParams() ([]Param, []Param) {
 			continue
 		}
 
-		if tok == lexer.OUT {
+		if !fireAndForget && tok == lexer.OUT {
 			for {
 				tok, _ = p.scanIgnoreWhitespace()
 				if tok == lexer.CURLY_BRACKET_OPEN {
@@ -492,7 +499,7 @@ func (p *Parser) scanParams() ([]Param, []Param) {
 		break
 	}
 
-	return inParams, outParams
+	return inParams, outParams, fireAndForget
 }
 
 func (p *Parser) scanStructParams() []Param {
