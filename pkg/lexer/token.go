@@ -38,4 +38,5 @@ const (
 	SELECTIVE
 	IN
 	OUT
+	FIRE_AND_FORGET
 )
