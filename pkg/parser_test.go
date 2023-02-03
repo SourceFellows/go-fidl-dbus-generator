@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestParseFidl_Notofication(t *testing.T) {
+func TestParseFidl_Notification(t *testing.T) {
 
 	//given
 	parser := NewParser(bytes.NewReader(examples.NotificationFidl))
