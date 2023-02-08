@@ -95,7 +95,7 @@ func (impl *{{$ImplementationName}}) Close() error {
 
     	err := impl.dbusConnection.Object(impl.destination, impl.path).
     		CallWithContext(ctx, "{{$fqInterfaceName}}.{{.Name}}{{"\"" -}}
-    		, 0
+    		, {{if .FireAndForget}}dbus.FlagNoReplyExpected{{else}}0{{end}}
     		{{- range $idx, $param := .In -}}
                 , {{nameify $param.Name -}}
             {{- end}}).
