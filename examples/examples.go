@@ -7,3 +7,6 @@ var NotificationFidl []byte
 
 //go:embed SystemdManager.fidl
 var SystemManagerFidl []byte
+
+//go:embed FireAndForget.fidl
+var FireAndForgetsFidl []byte

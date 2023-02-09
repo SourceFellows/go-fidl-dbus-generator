@@ -54,6 +54,37 @@ func TestParseFidl_SystemManager(t *testing.T) {
 
 }
 
+func TestParseFidl_FireAndForget(t *testing.T) {
+
+	//given
+	parser := NewParser(bytes.NewReader(examples.FireAndForgetsFidl))
+
+	//when
+	fidl, err := parser.Parse()
+
+	//then
+	if err != nil {
+		t.Errorf("could not parse fidl because of: %v", err)
+		return
+	}
+
+	if fidl == nil {
+		t.Error("fidl wasn't parsed")
+		return
+	}
+
+	if len(fidl.Methods) != 1 {
+		t.Errorf("wrong number of methods. expected 1 but got %d", len(fidl.Methods))
+		return
+	}
+
+	if !fidl.Methods[0].FireAndForget {
+		t.Error("expected fireAndForget method")
+		return
+	}
+
+}
+
 func paramOfName(fidl *Fidl, name string) Param {
 
 	for _, tr := range fidl.Methods {

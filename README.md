@@ -26,3 +26,9 @@ Parameters
 Sample:
 
 `go-fidl -sender -in "path/to/fidl/file"`
+
+## Generate the examples
+
+```
+go run cmd/go-fidl/main.go -in ../examples/Notifications.fidl -package notification -sender -out ../examples/notification/NotificationSender.go
+```

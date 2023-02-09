@@ -1,0 +1,15 @@
+package org.freedesktop
+
+interface FireAndForget {
+
+   version {
+      major 1
+      minor 0
+   }
+
+   method setParam fireAndForget {
+      in {
+          UInt8 param
+      }
+   }
+}
